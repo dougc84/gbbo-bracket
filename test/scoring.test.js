@@ -12,7 +12,7 @@ function rate(b, list) {
   for (const [ep, bake, v] of list) b.ratings[`${ep}-${bake}`] = v;
 }
 
-test("5 poor + 1 okay ranks below 4 poor + 2 okay", () => {
+test("5 poor + 1 okay ranks below 4 poor + 2 okay (strongest first)", () => {
   const s = S.newState();
   const a = baker(s, 0, "Ann");
   const b = baker(s, 1, "Bob");
@@ -21,7 +21,7 @@ test("5 poor + 1 okay ranks below 4 poor + 2 okay", () => {
   assert.equal(S.totalScore(s, a), -5);
   assert.equal(S.totalScore(s, b), -4);
   const order = S.rank(s).ranked.map((r) => r.name);
-  assert.ok(order.indexOf("Ann") < order.indexOf("Bob"));
+  assert.ok(order.indexOf("Bob") < order.indexOf("Ann"));
 });
 
 test("flags and star baker are worth 0.25 each", () => {
@@ -35,32 +35,48 @@ test("flags and star baker are worth 0.25 each", () => {
   assert.equal(S.totalScore(s, a), 0.25);
 });
 
-test("tie-break: in line to go home ranks below an equal score without it", () => {
-  const s = S.newState();
-  const cat = baker(s, 0, "Cat");
-  const dan = baker(s, 1, "Dan");
-  // Cat: good + home flag + star flag = 1 (1 home, 1 star). Dan: good = 1 (no flags).
-  rate(cat, [[1, "sig", "good"]]);
-  cat.inLineHome[1] = true;
-  cat.inLineStar[2] = true;
-  rate(dan, [[1, "sig", "good"]]);
-  assert.equal(S.totalScore(s, cat), S.totalScore(s, dan));
-  const order = S.rank(s).ranked.map((r) => r.name);
-  assert.ok(order.indexOf("Cat") < order.indexOf("Dan"));
-});
-
-test("tie-break: in line for star baker ranks above an equal score without it", () => {
+test("tie-break: fewer poor bakes ranks higher, then fewer okay bakes", () => {
   const s = S.newState();
   const ann = baker(s, 0, "Ann");
   const bob = baker(s, 1, "Bob");
-  // Same total (0), same home flags (1). Ann won Star Baker; Bob was in line for it.
-  ann.inLineHome[1] = true;
-  s.starBaker[2] = ann.id;
-  bob.inLineHome[1] = true;
-  bob.inLineStar[2] = true;
-  assert.equal(S.totalScore(s, ann), S.totalScore(s, bob));
-  const order = S.rank(s).ranked.map((r) => r.name);
-  assert.ok(order.indexOf("Ann") < order.indexOf("Bob"));
+  const cat = baker(s, 2, "Cat");
+  // All total 0. Ann: 1 good + 1 poor. Bob: 2 okay. Cat: 1 okay. Flags don't break ties.
+  rate(ann, [[1, "sig", "good"], [1, "tech", "poor"]]);
+  rate(bob, [[1, "sig", "okay"], [1, "tech", "okay"]]);
+  rate(cat, [[1, "sig", "okay"]]);
+  cat.inLineHome[1] = true;
+  cat.inLineStar[1] = true;
+  const order = S.rank(s).ranked.filter((r) => ["Ann", "Bob", "Cat"].includes(r.name)).map((r) => r.name);
+  assert.deepEqual(order, ["Cat", "Bob", "Ann"]);
+});
+
+test("a full tie shares a place and keeps table order", () => {
+  const s = S.newState();
+  const { ranked } = S.rank(s);
+  assert.deepEqual(ranked.map((r) => r.place), Array(12).fill(1));
+  assert.deepEqual(ranked.slice(0, 3).map((r) => r.name), ["Baker 1", "Baker 2", "Baker 3"]);
+  rate(s.bakers[5], [[1, "sig", "good"]]);
+  rate(s.bakers[7], [[1, "sig", "poor"]]);
+  const places = S.rank(s).ranked.map((r) => `${r.name}:${r.place}`);
+  assert.equal(places[0], "Baker 6:1");
+  assert.equal(places[1], "Baker 1:2");
+  assert.equal(places[10], "Baker 12:2");
+  assert.equal(places[11], "Baker 8:12");
+});
+
+test("handshake is worth +1 per episode by default", () => {
+  const s = S.newState();
+  const a = baker(s, 0, "Ann");
+  a.handshake[1] = true;
+  assert.equal(S.totalScore(s, a), 1);
+  a.handshake[2] = true;
+  assert.equal(S.totalScore(s, a), 2);
+  assert.equal(S.counts(s, a).handshake, 2);
+  a.wentHome = 1;
+  assert.equal(S.totalScore(s, a), 1); // Ep 2 handshake no longer counts
+  s.weights.handshake = 3;
+  assert.equal(S.totalScore(s, a), 3);
+  assert.deepEqual(S.normalize({ version: 1, bakers: [{}] }).bakers[0].handshake, { 1: false, 2: false });
 });
 
 test("went home: later episodes ignored, baker moved out of ranking", () => {
@@ -102,9 +118,48 @@ test("formatScore", () => {
   assert.equal(S.formatScore(-0.5), "−0.5");
 });
 
-test("tie-break by name uses natural order (Baker 2 before Baker 10)", () => {
+test("custom weights change scores and ranking; normalize cleans them", () => {
   const s = S.newState();
+  const a = baker(s, 0, "Ann");
+  const b = baker(s, 1, "Bob");
+  rate(a, [[1, "sig", "dnf"]]);
+  rate(b, [[1, "sig", "okay"]]);
+  assert.equal(S.totalScore(s, a), 0);
+  s.weights.dnf = -2;
+  s.weights.okay = 0.5;
+  assert.equal(S.totalScore(s, a), -2);
+  assert.equal(S.totalScore(s, b), 0.5);
   const order = S.rank(s).ranked.map((r) => r.name);
-  assert.deepEqual(order.slice(0, 3), ["Baker 1", "Baker 2", "Baker 3"]);
-  assert.equal(order.at(-1), "Baker 12");
+  assert.ok(order.indexOf("Bob") < order.indexOf("Ann"));
+
+  const n = S.normalize({ version: 1, bakers: [], weights: { dnf: -1, good: "x", poor: NaN } });
+  assert.equal(n.weights.dnf, -1);
+  assert.equal(n.weights.good, S.WEIGHTS.good);
+  assert.equal(n.weights.poor, S.WEIGHTS.poor);
+  assert.deepEqual(S.normalize({ version: 1, bakers: [] }).weights, S.WEIGHTS);
+});
+
+test("counts unscored bakes only for episodes the baker was in", () => {
+  const s = S.newState();
+  const a = baker(s, 0, "Ann");
+  assert.equal(S.counts(s, a).unscored, 6);
+  rate(a, [[1, "sig", "good"], [1, "tech", "dnf"]]);
+  assert.equal(S.counts(s, a).unscored, 4); // DNF counts as rated
+  a.wentHome = 1;
+  assert.equal(S.counts(s, a).unscored, 1); // Ep 2 no longer counts
+});
+
+test("star baker and going home exclude each other in an episode", () => {
+  const s = S.newState();
+  const a = baker(s, 0, "Ann");
+  s.starBaker[1] = a.id;
+  assert.equal(S.canGoHome(s, a, 1), false);
+  assert.equal(S.canGoHome(s, a, 2), true);
+  s.starBaker[1] = null;
+  a.wentHome = 1;
+  assert.equal(S.canBeStarBaker(a, 1), false);
+  assert.equal(S.canBeStarBaker(a, 2), false); // gone by then
+  // Saved data breaking the rule gets cleaned up.
+  const n = S.normalize({ version: 1, bakers: [{ id: "b1", wentHome: 1 }], starBaker: { 1: "b1" } });
+  assert.equal(n.starBaker[1], null);
 });

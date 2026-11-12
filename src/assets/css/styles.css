@@ -1,19 +1,20 @@
 :root {
   --bg: #fbfaf7;
-  --ink: #23211e;
-  --muted: #77726a;
-  --line: #e4e0d8;
-  --line-strong: #cfc9bd;
-  --accent: #8a5a2b;
-  --good-bg: #e2f0de;
-  --good-ink: #2d6a33;
-  --okay-bg: #ebe9e4;
-  --okay-ink: #4d4a44;
-  --poor-bg: #f7e0dd;
-  --poor-ink: #9a2f26;
-  --dnf-bg: #e6e3f2;
-  --dnf-ink: #514a7a;
-  --radius: 6px;
+  --ink: #1a1815;
+  --muted: #55504a;
+  --faint: #8a847a;
+  --line: #d5cfc4;
+  --line-strong: #a39b8c;
+  --accent: #7a4a1c;
+  --good-bg: #cde9c5;
+  --good-ink: #1d5424;
+  --okay-bg: #dcd8cf;
+  --okay-ink: #2f2c27;
+  --poor-bg: #f5c9c2;
+  --poor-ink: #8a1f15;
+  --dnf-bg: #d9d2f0;
+  --dnf-ink: #3d3470;
+  --radius: 5px;
   font-size: 15px;
 }
 
@@ -26,26 +27,21 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  line-height: 1.4;
+  line-height: 1.35;
   -webkit-font-smoothing: antialiased;
 }
 
 main {
   max-width: 100%;
-  padding: 2rem clamp(1rem, 3vw, 2.5rem) 3rem;
+  padding: 0.6rem clamp(0.5rem, 1.5vw, 1rem) 1.25rem;
 }
 
 .page-head h1 {
-  margin: 0 0 0.25rem;
-  font-size: 1.75rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-}
-
-.lede {
-  margin: 0 0 1.5rem;
-  color: var(--muted);
-  max-width: 60ch;
+  margin: 0.25rem 0 0.75rem;
+  font-size: 2rem;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
 }
 
 /* ---- Table ---- */
@@ -53,7 +49,6 @@ main {
 .table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 0.5rem;
 }
 
 .grid {
@@ -69,33 +64,38 @@ main {
 .grid td {
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  padding: 0.5rem 0.6rem;
+  padding: 0.3rem 0.4rem;
   vertical-align: middle;
   background: var(--bg);
 }
 .grid tr > :last-child { border-right: 0; }
 .grid tbody tr:last-child > * { border-bottom: 0; }
-/* The first header row's last cell (Total) spans both rows. */
-.grid thead tr.groups > :last-child { border-right: 0; }
 
 /* Stronger line between episodes. */
 .grid .ep-end { border-right-color: var(--line-strong); }
 
 .grid thead th {
-  font-weight: 600;
+  font-weight: 650;
   text-align: center;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 .grid thead tr.groups th {
   color: var(--ink);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
+/* Narrow headers wrap; tighter spacing so single words like "HANDSHAKE?" fit. */
 .grid thead th.narrow {
-  max-width: 6.5rem;
   white-space: normal;
+  letter-spacing: 0.02em;
+}
+/* All five checkbox columns share one width (set by the widest, "HANDSHAKE?"). */
+.grid thead th.narrow:not(.ep-end) {
+  width: 6.5rem;
+  min-width: 6.5rem;
+  max-width: 6.5rem;
 }
 
 .grid .sticky {
@@ -106,35 +106,62 @@ main {
 }
 .contestant-head { text-align: left !important; }
 
+/* Fixed width: the description wraps inside it instead of widening the column. */
 .contestant {
-  min-width: 13rem;
+  width: 12rem;
+  min-width: 12rem;
+  max-width: 12rem;
   text-align: left;
   font-weight: normal;
 }
 
+.name-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
 .name,
 .desc {
-  display: block;
-  width: 100%;
   font: inherit;
   color: inherit;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 4px;
-  padding: 0.15rem 0.3rem;
-  margin: 0 -0.3rem;
-  width: calc(100% + 0.6rem);
+  padding: 0.05rem 0.25rem;
+  margin-left: -0.25rem;
 }
+/* Long names wrap onto the next line instead of scrolling. */
 .name {
-  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  font-weight: 650;
   font-size: 0.95rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: text;
 }
+/* Unnamed bakers show "Baker N" in the same colour as a real name. */
+.name:empty::before {
+  content: attr(data-placeholder);
+  color: var(--ink);
+  pointer-events: none;
+}
+/* Grows taller with its text, wraps within the column, no resize handle. */
 .desc {
-  resize: vertical;
+  display: block;
+  width: calc(100% + 0.25rem);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   font-size: 0.8rem;
   color: var(--muted);
-  min-height: 2.2rem;
-  margin-top: 0.15rem;
+  min-height: 1.3em;
+  cursor: text;
+}
+.desc:empty::before {
+  content: attr(data-placeholder);
+  color: var(--faint);
+  pointer-events: none;
 }
 .name:hover,
 .desc:hover { border-color: var(--line); }
@@ -144,25 +171,27 @@ main {
   border-color: var(--line-strong);
   background: #fff;
 }
-.name::placeholder { color: #b3ada3; font-weight: 500; }
-.desc::placeholder { color: #c2bdb4; }
 
-.out-tag {
-  display: inline-block;
-  margin-top: 0.3rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--poor-ink);
-  background: var(--poor-bg);
+.total-badge {
+  flex: none;
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 0.05rem 0.45rem;
   border-radius: 999px;
-  padding: 0.05rem 0.5rem;
+  background: var(--okay-bg);
+  color: var(--okay-ink);
 }
+.total-badge.pos-score { background: var(--good-bg); color: var(--good-ink); }
+.total-badge.neg { background: var(--poor-bg); color: var(--poor-ink); }
 
-/* Rating control */
+/* Rating control. Selected state changes colour only, never weight,
+   so the buttons don't shift width when clicked. */
 
 .seg {
   display: inline-flex;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   overflow: hidden;
   background: #fff;
@@ -174,26 +203,28 @@ main {
   border-right: 1px solid var(--line);
   background: transparent;
   color: var(--muted);
-  padding: 0.3rem 0.5rem;
+  padding: 0.22rem 0.4rem;
   cursor: pointer;
   white-space: nowrap;
 }
 .opt:last-child { border-right: 0; }
-.opt:hover:not(:disabled) { background: #f3f1ec; color: var(--ink); }
+.opt:hover:not(:disabled) { background: #efece5; color: var(--ink); }
 .opt:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .opt:disabled { cursor: not-allowed; }
 
-.opt-good[aria-pressed="true"] { background: var(--good-bg); color: var(--good-ink); font-weight: 600; }
-.opt-okay[aria-pressed="true"] { background: var(--okay-bg); color: var(--okay-ink); font-weight: 600; }
-.opt-poor[aria-pressed="true"] { background: var(--poor-bg); color: var(--poor-ink); font-weight: 600; }
-.opt-dnf[aria-pressed="true"]  { background: var(--dnf-bg);  color: var(--dnf-ink);  font-weight: 600; }
+.opt-good[aria-pressed="true"] { background: var(--good-bg); color: var(--good-ink); }
+.opt-okay[aria-pressed="true"] { background: var(--okay-bg); color: var(--okay-ink); }
+.opt-poor[aria-pressed="true"] { background: var(--poor-bg); color: var(--poor-ink); }
+.opt-dnf[aria-pressed="true"]  { background: var(--dnf-bg);  color: var(--dnf-ink); }
 
 /* Checkboxes and scores */
 
 .check { text-align: center; }
 .check input {
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  vertical-align: middle;
   accent-color: var(--accent);
   cursor: pointer;
 }
@@ -204,30 +235,46 @@ main {
 .score {
   text-align: center;
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  min-width: 3.5rem;
+  font-weight: 650;
+  min-width: 3rem;
 }
-.score.total { font-size: 0.95rem; }
 
 /* Disabled cells after a baker goes home */
 .off > * { opacity: 0.3; }
-.is-out .contestant .name,
-.is-out .contestant .desc { opacity: 0.75; }
+/* The baker's own cell is greyed a little, no badge. */
+.is-out .contestant > :not(.hide-link) { opacity: 0.5; }
+
+/* Collapsed went-home row: one cell in place of all the rating cells. */
+.grid .gone-cell {
+  border-right: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.gone-cell .link { margin-left: 0.6rem; }
+.hide-link {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+}
 
 /* ---- Results ---- */
 
 .results {
-  margin-top: 2.5rem;
-  max-width: 42rem;
+  margin-top: 1.25rem;
+  max-width: 40rem;
 }
+/* Ranking, Went home and How scores work share one heading style. */
 .results h2 {
-  margin: 0 0 0.25rem;
-  font-size: 1.25rem;
+  margin: 0 0 0.2rem;
+  font-size: 1.15rem;
+  color: var(--ink);
 }
+.results .hint { margin-top: -0.2rem; }
 .hint {
-  margin: 0 0 1rem;
+  margin: 0 0 0.4rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .rank,
@@ -240,15 +287,15 @@ main {
 .gone li {
   display: flex;
   align-items: baseline;
-  gap: 0.75rem;
-  padding: 0.55rem 0;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
   border-bottom: 1px solid var(--line);
 }
 .rank li:last-child,
 .gone li:last-child { border-bottom: 0; }
 
 .pos {
-  width: 1.5rem;
+  width: 1.4rem;
   text-align: right;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
@@ -257,71 +304,130 @@ main {
   flex: 1;
   display: flex;
   flex-wrap: wrap;
-  column-gap: 0.75rem;
+  column-gap: 0.6rem;
   align-items: baseline;
 }
 .gone .rname { flex: 0 0 auto; }
 .gone .rdetail { flex: 1; }
-.rname { font-weight: 600; }
+.rname { font-weight: 650; }
 .rdetail {
   color: var(--muted);
   font-size: 0.8rem;
 }
-.rscore {
+/* Bakes not rated yet. */
+.rdetail .unscored {
+  color: #8a4300;
+  background: #ffe2c2;
   font-weight: 650;
+  border-radius: 3px;
+  padding: 0 0.3rem;
+}
+/* "In line to go home" count: a bold red X drawn as an icon, then the number. */
+.rdetail .flag-x {
+  color: var(--poor-ink);
+  font-weight: 650;
+  white-space: nowrap;
+}
+.rdetail .flag-x::before {
+  content: "";
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin-right: 0.25em;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 1.5l7 7M8.5 1.5l-7 7' stroke='%23000' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 1.5l7 7M8.5 1.5l-7 7' stroke='%23000' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.rscore {
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  min-width: 3.5rem;
+  min-width: 3rem;
   text-align: right;
 }
 .rscore.neg { color: var(--poor-ink); }
 .rscore.pos-score { color: var(--good-ink); }
 
-.gone {
-  margin-top: 1.75rem;
-  opacity: 0.7;
+/* Same gap as between the table and Ranking. */
+.gone,
+.how {
+  margin-top: 1.25rem;
 }
-.gone h3,
-.how h3 {
-  margin: 0 0 0.25rem;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-}
+.gone li { color: var(--muted); }
 
 .how {
-  margin-top: 2rem;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-.how p { margin: 0.25rem 0; }
-
-.page-foot {
-  margin-top: 2.5rem;
-}
-.reset {
-  font: inherit;
   font-size: 0.8rem;
   color: var(--muted);
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 0.35rem 0.75rem;
+}
+.how p { margin: 0.15rem 0; }
+
+/* Editable points table, styled like the ranking rows. */
+.points {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.1rem 0 0.3rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+.points th,
+.points td {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-weight: normal;
+}
+.points thead th {
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.points tbody tr:last-child > * { border-bottom: 0; }
+.points td,
+.points thead th:last-child { text-align: right; }
+.points-input {
+  width: 5rem;
+  font: inherit;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 0.15rem 0.35rem;
+}
+.points-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.link {
+  font: inherit;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
   cursor: pointer;
 }
-.reset:hover { color: var(--poor-ink); border-color: var(--poor-ink); }
+
+.page-foot {
+  margin-top: 3.5rem;
+}
+/* Plain text link, not a button. */
+.link.reset {
+  font-size: 0.85rem;
+  color: #6a140c;
+}
+.link.reset:hover,
+.link.reset:focus-visible { color: #d0281a; }
 
 /* ---- Phones ---- */
 
 @media (max-width: 600px) {
   /* Keep the pinned column narrow so the ratings get most of the screen. */
-  .contestant { min-width: 8.5rem; max-width: 8.5rem; }
-  .grid th,
-  .grid td { padding: 0.45rem 0.4rem; }
+  .contestant { width: 9rem; min-width: 9rem; max-width: 9rem; }
 }
 
 /* Bigger tap targets on touch screens. */
 @media (pointer: coarse) {
-  .opt { padding: 0.5rem 0.6rem; }
-  .check input { width: 1.35rem; height: 1.35rem; }
+  .opt { padding: 0.45rem 0.55rem; }
+  .check input { width: 1.3rem; height: 1.3rem; }
 }

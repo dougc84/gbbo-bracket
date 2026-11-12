@@ -2,11 +2,11 @@
 import { EPISODES, BAKES, RATINGS, WEIGHTS } from "../assets/js/scoring.js";
 
 export default {
-  title: "Bake-Off Tracker",
+  title: "Bake-Off Bracket Helper",
   episodes: EPISODES,
   bakes: BAKES,
   ratings: RATINGS,
   weights: WEIGHTS,
-  // 3 bakes + in line to go home + in line for star baker + went home + star baker + score
-  columnsPerEpisode: BAKES.length + 5,
+  // 3 bakes + in line for star baker + in line to go home + handshake + star baker + went home + score
+  columnsPerEpisode: BAKES.length + 6,
 };

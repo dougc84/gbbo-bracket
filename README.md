@@ -1,6 +1,6 @@
-# Bake-Off Tracker
+# Bake-Off Bracket Helper
 
-A single-page tracker for the first two episodes of The Great British Baking Show. Rate each baker's three bakes per episode, flag who's in line for Star Baker or to go home, mark who went home and who won Star Baker, and scroll down to see everyone ranked from weakest to strongest.
+A single-page tracker for the first two episodes of The Great British Baking Show. Rate each baker's three bakes per episode, flag who's in line for Star Baker or to go home, mark who went home and who won Star Baker, and scroll down to see everyone ranked from strongest to weakest.
 
 Built with [11ty](https://www.11ty.dev/) and [Alpine.js](https://alpinejs.dev/). There's no backend: everything saves to the browser's `localStorage` on the device you're using.
 
@@ -31,7 +31,7 @@ Import the repo in Netlify. `netlify.toml` already sets the build command (`npm 
 
 ## Changing the scoring
 
-All weights live in `WEIGHTS` in `src/assets/js/scoring.js`:
+You can change any of the points on the page itself: the "How scores work" table at the bottom re-scores everything as you type, and your values are saved in the browser. The defaults live in `WEIGHTS` in `src/assets/js/scoring.js`:
 
 | Item | Points |
 | --- | --- |
@@ -41,9 +41,10 @@ All weights live in `WEIGHTS` in `src/assets/js/scoring.js`:
 | DNF / not rated | not counted |
 | In line for Star Baker (per episode) | +0.25 |
 | In line to go home (per episode) | −0.25 |
+| Handshake (per episode) | +1 |
 | Won Star Baker | +0.25 |
 
-Ties are broken in this order: being in line to go home ranks lower, then being in line for Star Baker ranks higher, then fewer poor bakes, then by name. Bakers marked as gone are listed separately under the ranking.
+The ranking is strongest first. Ties are broken by fewer poor bakes, then fewer okay bakes. Anything still level is a tie, and tied bakers share a place. Bakers marked as gone are listed separately under the ranking.
 
 The episodes, bakes and rating options are defined in the same file and feed the table columns at build time through `src/_data/show.js`.
 
