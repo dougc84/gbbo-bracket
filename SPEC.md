@@ -147,7 +147,7 @@ src/
   assets/css/styles.css  all styles
 test/scoring.test.js     node:test tests for scoring.js
 eleventy.config.js       passthrough src/assets, input src, output _site
-.github/workflows/deploy.yml  npm install → test → build → upload-pages-artifact@v4 → deploy-pages@v4
+.github/workflows/deploy.yml  Node 26 LTS: npm install → test → build → upload-pages-artifact@v5 → deploy-pages@v5
 netlify.toml             fallback deploy config
 ```
 

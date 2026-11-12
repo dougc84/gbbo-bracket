@@ -13,7 +13,7 @@ npm test         # scoring tests
 npm run build    # outputs the static site to _site/
 ```
 
-Needs Node 18 or newer (the deploy uses Node 22).
+Needs Node 18 or newer (the deploy uses Node 26, the current LTS).
 
 ## Deploy to GitHub Pages
 
