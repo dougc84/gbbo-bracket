@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ show.title }}</title>
+  <meta name="description" content="Rate each baker's bakes in episodes 1 and 2 and see who's looking strongest.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧁</text></svg>">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script type="module" src="assets/js/app.js"></script>
+</head>
+<body>
+  <main x-data="tracker" x-cloak>
+    <header class="page-head">
+      <h1>{{ show.title }}</h1>
+      <p class="lede">Rate every bake in episodes 1 and 2. The ranking below updates as you go. Everything saves in this browser only.</p>
+    </header>
+
+    <div class="table-scroll">
+      <table class="grid">
+        <thead>
+          <tr class="groups">
+            <th rowspan="2" class="sticky contestant-head" scope="col">Contestant</th>
+            {% for ep in show.episodes %}
+            <th colspan="{{ show.columnsPerEpisode }}" scope="colgroup" class="ep-end">Episode {{ ep }}</th>
+            {% endfor %}
+            <th rowspan="2" scope="col" class="total-head">Total</th>
+          </tr>
+          <tr class="cols">
+            {% for ep in show.episodes %}
+              {% for bake in show.bakes %}
+              <th scope="col">{{ bake.label }}</th>
+              {% endfor %}
+              <th scope="col" class="narrow">In line to go home</th>
+              <th scope="col" class="narrow">In line for Star Baker</th>
+              <th scope="col" class="narrow">Went home</th>
+              <th scope="col" class="narrow">Star Baker</th>
+              <th scope="col" class="narrow ep-end">Score</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(b, i) in state.bakers" :key="b.id">
+            <tr :class="{ 'is-out': b.wentHome !== null }">
+              <th scope="row" class="sticky contestant">
+                <input class="name" type="text" x-model="b.name" :placeholder="'Baker ' + (i + 1)" :aria-label="'Name of baker ' + (i + 1)" autocomplete="off" spellcheck="false">
+                <textarea class="desc" x-model="b.description" rows="2" placeholder="Short description" :aria-label="'Description of baker ' + (i + 1)"></textarea>
+                <span class="out-tag" x-show="b.wentHome !== null" x-text="'Went home in Ep ' + b.wentHome"></span>
+              </th>
+
+              {% for ep in show.episodes %}
+                {% for bake in show.bakes %}
+                <td class="rating" :class="{ off: !active(b, {{ ep }}) }">
+                  <div class="seg" role="group" aria-label="Episode {{ ep }} {{ bake.label }}">
+                    {% for r in show.ratings %}
+                    <button type="button" class="opt opt-{{ r.value }}"
+                      :aria-pressed="(rating(b, {{ ep }}, '{{ bake.key }}') === '{{ r.value }}').toString()"
+                      :disabled="!active(b, {{ ep }})"
+                      @click="setRating(b, {{ ep }}, '{{ bake.key }}', '{{ r.value }}')">{{ r.label }}</button>
+                    {% endfor %}
+                  </div>
+                </td>
+                {% endfor %}
+                <td class="check" :class="{ off: !active(b, {{ ep }}) }">
+                  <input type="checkbox" class="flag-home" :aria-label="'Episode {{ ep }}: in line to go home'"
+                    :checked="b.inLineHome[{{ ep }}]" :disabled="!active(b, {{ ep }})"
+                    @change="b.inLineHome[{{ ep }}] = $event.target.checked">
+                </td>
+                <td class="check" :class="{ off: !active(b, {{ ep }}) }">
+                  <input type="checkbox" class="flag-star" :aria-label="'Episode {{ ep }}: in line for Star Baker'"
+                    :checked="b.inLineStar[{{ ep }}]" :disabled="!active(b, {{ ep }})"
+                    @change="b.inLineStar[{{ ep }}] = $event.target.checked">
+                </td>
+                <td class="check" :class="{ off: !active(b, {{ ep }}) }">
+                  <input type="checkbox" class="went-home" :aria-label="'Episode {{ ep }}: went home'"
+                    :checked="b.wentHome === {{ ep }}" :disabled="!active(b, {{ ep }})"
+                    @change="toggleWentHome(b, {{ ep }})">
+                </td>
+                <td class="check" :class="{ off: !active(b, {{ ep }}) }">
+                  <input type="checkbox" class="star-baker" :aria-label="'Episode {{ ep }}: Star Baker'"
+                    :checked="isStarBaker(b, {{ ep }})" :disabled="!active(b, {{ ep }})"
+                    @change="toggleStarBaker(b, {{ ep }})">
+                </td>
+                <td class="score ep-end" :class="{ off: !active(b, {{ ep }}) }" x-text="active(b, {{ ep }}) ? fmt(episodeScore(b, {{ ep }})) : ''"></td>
+              {% endfor %}
+
+              <td class="score total" x-text="fmt(total(b))"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <section class="results" aria-labelledby="results-title">
+      <h2 id="results-title">Ranking</h2>
+      <p class="hint">Weakest at the top, strongest at the bottom.</p>
+
+      <ol class="rank">
+        <template x-for="(r, n) in results.ranked" :key="r.id">
+          <li>
+            <span class="pos" x-text="n + 1"></span>
+            <span class="who">
+              <span class="rname" x-text="r.name"></span>
+              <span class="rdetail" x-text="summary(r)"></span>
+            </span>
+            <span class="rscore" :class="{ neg: r.total < 0, 'pos-score': r.total > 0 }" x-text="fmt(r.total)"></span>
+          </li>
+        </template>
+      </ol>
+
+      <template x-if="results.eliminated.length">
+        <div class="gone">
+          <h3>Went home</h3>
+          <ul>
+            <template x-for="r in results.eliminated" :key="r.id">
+              <li>
+                <span class="rname" x-text="r.name"></span>
+                <span class="rdetail" x-text="'Ep ' + r.wentHome + ' · ' + summary(r)"></span>
+                <span class="rscore" x-text="fmt(r.total)"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </template>
+
+      <div class="how">
+        <h3>How scores work</h3>
+        <p>Good {{ show.weights.good }} · Okay {{ show.weights.okay }} · Poor {{ show.weights.poor }} · DNF and blank not counted.
+          In line for Star Baker +{{ show.weights.inLineStar }} · In line to go home {{ show.weights.inLineHome }} · Won Star Baker +{{ show.weights.starBaker }}.</p>
+        <p>Ties: being in line to go home ranks lower, being in line for Star Baker ranks higher, then fewer poor bakes, then by name. Bakers who went home are listed separately.</p>
+      </div>
+    </section>
+
+    <footer class="page-foot">
+      <button type="button" class="reset" @click="reset()">Clear everything</button>
+    </footer>
+  </main>
+</body>
+</html>

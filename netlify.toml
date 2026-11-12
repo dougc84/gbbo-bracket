@@ -1,0 +1,7 @@
+# Only used if you deploy to Netlify instead of GitHub Pages.
+[build]
+  command = "npm run build"
+  publish = "_site"
+
+[build.environment]
+  NODE_VERSION = "22"
